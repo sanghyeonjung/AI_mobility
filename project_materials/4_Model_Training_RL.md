@@ -4,7 +4,7 @@
 
 > **4차 과제 준비:** 신규 모델 두 개의 학습률 비교, 분할 학습/재개, TensorBoard 비교 및 캡처 순서는 [4차 과제 실행 및 제출 안내](./4_Assignment_Submission.md)를 참고하세요. `assignment4.cmd`로 실행하며 기존 `train.py` 실습도 그대로 가능합니다.
 
-> **다른 PC의 Codex 인계:** [CODEX_HANDOFF.md](../CODEX_HANDOFF.md) 하나에 작업 목표·고정 조건·설치·학습·검증 순서가 정리되어 있습니다. `TOTAL_TIMESTEPS=200000`을 유지하고 모델 간에는 학습률만 변경합니다.
+> **다른 PC의 Codex 인계:** [CODEX_HANDOFF.md](../CODEX_HANDOFF.md) 하나에 작업 목표·고정 조건·설치·학습·검증 순서가 정리되어 있습니다. `TOTAL_TIMESTEPS=200000`을 유지하고 A의 학습률은 `0.00005`, B는 `0.0003`으로 설정해 둘 다 원본 `train.py`의 `0.0001`과 다른 값으로 새로 학습합니다.
 
 ## 1. 전체 흐름과 파일 위치
 

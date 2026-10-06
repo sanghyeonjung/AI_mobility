@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 
 BASE = Path(__file__).resolve().parent
 RESULTS = BASE / "results" / "assignment4"
-PROFILES = {"a": {"lr": 1e-4}, "b": {"lr": 3e-4}}
+PROFILES = {"a": {"lr": 5e-5}, "b": {"lr": 3e-4}}
 REQUIRED_TIMESTEPS = 200_000
 KST = timezone(timedelta(hours=9))
 SOURCES = ("train.py", "train_assignment4.py", "algorithms/ppo.py",

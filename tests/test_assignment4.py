@@ -20,6 +20,14 @@ from utils.logger import RunLogger
 
 
 class AssignmentTests(unittest.TestCase):
+    def test_both_profiles_change_learning_rate_from_original(self):
+        from train import HPARAMS, TOTAL_TIMESTEPS
+        self.assertEqual(TOTAL_TIMESTEPS, 200000)
+        self.assertEqual(assignment.PROFILES["a"], {"lr": 5e-5})
+        self.assertEqual(assignment.PROFILES["b"], {"lr": 3e-4})
+        for overrides in assignment.PROFILES.values():
+            self.assertNotEqual(overrides["lr"], HPARAMS["lr"])
+
     def test_training_budget_cannot_be_reduced(self):
         args = SimpleNamespace(model="a", new_run=False, session_updates=1)
         with patch("train.TOTAL_TIMESTEPS", 50000):
@@ -53,8 +61,8 @@ class AssignmentTests(unittest.TestCase):
                 env.close()
 
     def test_checkpoint_restores_policy_optimizer_steps_and_rng(self):
-        config = {"model": "a", "hparams": {"lr": 1e-4}}
-        agent = PPO(31, 2, hidden_sizes=(8, 8), device="cpu")
+        config = {"model": "a", "hparams": {"lr": 5e-5}}
+        agent = PPO(31, 2, lr=5e-5, hidden_sizes=(8, 8), device="cpu")
         agent.num_timesteps = 4096
         param = next(agent.policy.parameters())
         # 학습 없이 알려진 optimizer 상태를 직접 설정해 복원을 검증한다.
@@ -174,7 +182,7 @@ class AssignmentTests(unittest.TestCase):
             self.assertNotEqual(run_a, run_b)
             config_a = json.loads((run_a / "experiment_config.json").read_text(encoding="utf-8"))
             config_b = json.loads((run_b / "experiment_config.json").read_text(encoding="utf-8"))
-            self.assertEqual(config_a["hparams"]["lr"], 1e-4)
+            self.assertEqual(config_a["hparams"]["lr"], 5e-5)
             self.assertEqual(config_b["hparams"]["lr"], 3e-4)
             comparable_a = {**config_a, "model": None, "hparams": {**config_a["hparams"], "lr": None}}
             comparable_b = {**config_b, "model": None, "hparams": {**config_b["hparams"], "lr": None}}
@@ -230,7 +238,7 @@ class AssignmentTests(unittest.TestCase):
             self.assertEqual(events.Scalars("episode/return"), [])
             from test import load_agent
             restored = load_agent(str(run / "model.pt"), 31, 2, algorithm="ppo")
-            self.assertEqual(restored.optimizer.param_groups[0]["lr"], 1e-4)
+            self.assertEqual(restored.optimizer.param_groups[0]["lr"], 5e-5)
             for k, value in restored.policy.state_dict().items():
                 self.assertTrue(torch.equal(value, before[k]))
 
