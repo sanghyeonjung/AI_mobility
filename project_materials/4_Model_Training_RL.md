@@ -4,6 +4,8 @@
 
 > **4차 과제 준비:** 신규 모델 두 개의 학습률 비교, 분할 학습/재개, TensorBoard 비교 및 캡처 순서는 [4차 과제 실행 및 제출 안내](./4_Assignment_Submission.md)를 참고하세요. `assignment4.cmd`로 실행하며 기존 `train.py` 실습도 그대로 가능합니다.
 
+> **다른 PC의 Codex 인계:** [CODEX_HANDOFF.md](../CODEX_HANDOFF.md) 하나에 작업 목표·고정 조건·설치·학습·검증 순서가 정리되어 있습니다. `TOTAL_TIMESTEPS=200000`을 유지하고 모델 간에는 학습률만 변경합니다.
+
 ## 1. 전체 흐름과 파일 위치
 
 BC는 저장된 관측과 정답 행동을 비교하지만, 이번 단계에서는 차량이 SUMO에서 직접 행동하고 받은 reward로 모델을 업데이트함. 별도의 NPZ 데이터 파일을 준비하지 않아도 됨.
@@ -398,4 +400,3 @@ python test.py results/run_YYYYMMDD_HHMMSS/model.pt --algorithm ppo --episodes 5
 `test.py`는 기본적으로 모델 유형을 자동 판별함. 과거 모델 평가 시 현재 네트워크 설정과 학습 당시 구조가 맞는지 확인함. 도로나 reward를 변경한 경우에도 저장된 설정 파일과 현재 파일을 비교함.
 
 실습에서는 학습률이나 reward 계수를 바꾼 모델을 서로 다른 결과 폴더에 저장하고 TensorBoard 평가 지표와 실제 SUMO 주행을 함께 비교함. 충돌·완주 여부, 앞차 접근 거리, 불필요한 가감속, 실제 차선 변경을 확인함.
-

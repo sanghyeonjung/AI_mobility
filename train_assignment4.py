@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, timezone
 BASE = Path(__file__).resolve().parent
 RESULTS = BASE / "results" / "assignment4"
 PROFILES = {"a": {"lr": 1e-4}, "b": {"lr": 3e-4}}
+REQUIRED_TIMESTEPS = 200_000
 KST = timezone(timedelta(hours=9))
 SOURCES = ("train.py", "train_assignment4.py", "algorithms/ppo.py",
            "utils/logger.py", "utils/buffer.py", "utils/networks.py",
@@ -120,6 +121,10 @@ def train(args):
     from algorithms.ppo import PPO
     from utils.logger import RunLogger
 
+    if TOTAL_TIMESTEPS != REQUIRED_TIMESTEPS:
+        raise RuntimeError("Assignment requires TOTAL_TIMESTEPS = 200000 in train.py. Do not change the training budget.")
+    target = TOTAL_TIMESTEPS
+
     # JSON 정규화로 튜플/리스트의 저장 후 비교 차이를 제거한다.
     config = json.loads(json.dumps({
         "model": args.model, "hparams": {**HPARAMS, **PROFILES[args.model]},
@@ -132,11 +137,11 @@ def train(args):
         info = json.loads((run_dir / "run_info.json").read_text(encoding="utf-8"))
         if info["source_hashes"] != source_hashes():
             raise RuntimeError("Source files changed since the run began. Restore them or use --new-run.")
-        target = args.timesteps or info["target_steps"]
+        if info["target_steps"] != target:
+            raise RuntimeError("This run used a different training budget. Keep it and start a compliant run with --new-run.")
         if not (run_dir / "checkpoint.pt").is_file():
             raise RuntimeError("This run has no checkpoint. Start with --new-run.")
     else:
-        target = args.timesteps or TOTAL_TIMESTEPS
         stamp = datetime.now(KST).strftime("%Y%m%d_%H%M%S_%f")
         run_dir = RESULTS / f"model_{args.model}_{stamp}"
         run_dir.mkdir(parents=True, exist_ok=False)
@@ -241,7 +246,6 @@ def main():
                         choices=["check", "a", "b", "status", "tensorboard", "drive-a", "drive-b"])
     parser.add_argument("--check", action="store_true", help="Check dependencies; no training")
     parser.add_argument("--model", choices=PROFILES)
-    parser.add_argument("--timesteps", type=int, help="Cumulative target, default 200000 for a new run")
     parser.add_argument("--session-updates", type=int, default=10,
                         help="Updates per invocation (default 10); 0 = run to target")
     parser.add_argument("--new-run", action="store_true", help="Start another independent run")
@@ -255,8 +259,6 @@ def main():
         setattr(args, args.action, True)
     elif args.action and args.action.startswith("drive-"):
         args.drive = args.action[-1]
-    if args.timesteps is not None and args.timesteps < 1:
-        parser.error("--timesteps must be positive")
     if args.session_updates < 0:
         parser.error("--session-updates must be >= 0")
     if args.check:
@@ -292,4 +294,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

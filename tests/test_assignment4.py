@@ -20,6 +20,17 @@ from utils.logger import RunLogger
 
 
 class AssignmentTests(unittest.TestCase):
+    def test_training_budget_cannot_be_reduced(self):
+        args = SimpleNamespace(model="a", new_run=False, session_updates=1)
+        with patch("train.TOTAL_TIMESTEPS", 50000):
+            with self.assertRaisesRegex(RuntimeError, "TOTAL_TIMESTEPS = 200000"):
+                assignment.train(args)
+        with patch("sys.argv", ["train_assignment4.py", "a", "--timesteps", "50000"]), \
+                contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                assignment.main()
+            self.assertNotEqual(error.exception.code, 0)
+
     def test_sumo_connection_and_observation_without_model_training(self):
         from env import road_builder
         from env.sumo_env import SumoHighwayEnv
@@ -141,11 +152,13 @@ class AssignmentTests(unittest.TestCase):
                     break
 
         def args(model, **overrides):
-            return SimpleNamespace(model=model, new_run=False, timesteps=4096,
+            return SimpleNamespace(model=model, new_run=False,
                                    session_updates=1, **overrides)
 
         with tempfile.TemporaryDirectory() as tmp, \
                 patch.object(assignment, "RESULTS", Path(tmp)), \
+                patch.object(assignment, "REQUIRED_TIMESTEPS", 4096), \
+                patch("train.TOTAL_TIMESTEPS", 4096), \
                 patch.object(sumo_env, "SumoHighwayEnv", return_value=fake_env), \
                 patch.object(road_builder, "build", return_value="mock.sumocfg"), \
                 patch.object(PPO, "learn", no_training_learn), \
@@ -163,6 +176,9 @@ class AssignmentTests(unittest.TestCase):
             config_b = json.loads((run_b / "experiment_config.json").read_text(encoding="utf-8"))
             self.assertEqual(config_a["hparams"]["lr"], 1e-4)
             self.assertEqual(config_b["hparams"]["lr"], 3e-4)
+            comparable_a = {**config_a, "model": None, "hparams": {**config_a["hparams"], "lr": None}}
+            comparable_b = {**config_b, "model": None, "hparams": {**config_b["hparams"], "lr": None}}
+            self.assertEqual(comparable_a, comparable_b)
             assignment.train(args("a"))
             self.assertEqual(assignment.latest_run("a"), run_a)
             info = json.loads((run_a / "run_info.json").read_text(encoding="utf-8"))
@@ -193,9 +209,11 @@ class AssignmentTests(unittest.TestCase):
                 next(agent.policy.parameters()).add_(9)
             raise KeyboardInterrupt
 
-        args = SimpleNamespace(model="a", new_run=False, timesteps=4096, session_updates=10)
+        args = SimpleNamespace(model="a", new_run=False, session_updates=10)
         with tempfile.TemporaryDirectory() as tmp, \
                 patch.object(assignment, "RESULTS", Path(tmp)), \
+                patch.object(assignment, "REQUIRED_TIMESTEPS", 4096), \
+                patch("train.TOTAL_TIMESTEPS", 4096), \
                 patch("env.sumo_env.SumoHighwayEnv", return_value=fake_env), \
                 patch("env.road_builder.build", return_value="mock.sumocfg"), \
                 patch.object(PPO, "learn", interrupted_learn), \
@@ -219,4 +237,3 @@ class AssignmentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
