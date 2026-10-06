@@ -1,0 +1,15 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local training outputs (already tracked upstream examples stay tracked)
+/results/
+*.pt.tmp
+
+# Local credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+
